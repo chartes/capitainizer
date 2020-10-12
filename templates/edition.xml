@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="http://www.stoa.org/epidoc/schema/8.19/tei-epidoc.rng"
+  schematypens="http://relaxng.org/ns/structure/1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+    <teiHeader>
+        <fileDesc>
+            <titleStmt>
+                <title></title>
+                <author></author>
+            </titleStmt>
+            <publicationStmt>
+                <publisher>Ecole nationale des chartes</publisher>
+                <pubPlace>Paris</pubPlace>
+                <date></date>
+            </publicationStmt>
+        </fileDesc>
+        <encodingDesc>
+        </encodingDesc>
+    </teiHeader>
+    <text n="">
+        <body>
+            <div type="edition" n="" xml:lang="lat">
+            </div>
+        </body>
+    </text>
+</TEI>
