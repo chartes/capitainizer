@@ -17,9 +17,9 @@
         <encodingDesc>
         </encodingDesc>
     </teiHeader>
-    <text n="">
-        <body>
-            <div type="edition" n="" xml:lang="lat">
+    <text>
+        <body xml:lang="fre">
+            <div type="position" n="1" >
             </div>
         </body>
     </text>
