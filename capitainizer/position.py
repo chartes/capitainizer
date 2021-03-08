@@ -148,8 +148,9 @@ class PositionThese:
             for par in parent:
                 par.text = "ENCPOS_{0}".format(meta["promotion_year"])
 
-            creator = template.xpath("//dc:creator", namespaces=template.getroot().nsmap)
-            creator[0].text = "{0}, {1}".format(meta["author_name"], meta["author_firstname"])
+            if meta["author_name"] and meta["author_firstname"]:
+                creator = template.xpath("//dc:creator", namespaces=template.getroot().nsmap)
+                creator[0].text = "{0}, {1}".format(meta["author_name"], meta["author_firstname"])
 
             titles = template.xpath("//dc:title", namespaces=template.getroot().nsmap)
             for tit in titles:
