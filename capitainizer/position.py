@@ -2,6 +2,7 @@ import csv
 import os
 from collections import defaultdict
 from itertools import chain
+import re
 
 import lxml.etree as ET
 from lxml import etree
@@ -13,16 +14,18 @@ CTS_NS = "http://chs.harvard.edu/xmlns/cts"
 XML_NS = "http://www.w3.org/XML/1998/namespace"
 DC_NS = "http://purl.org/dc/elements/1.1/"
 CPT_NS = "http://purl.org/capitains/ns/1.0#"
+HTML_NS = "http://www.w3.org/1999/xhtml/"
+DCT_NS = "http://purl.org/dc/terms/"
+DTS_NS = "https://w3id.org/dts/api#"
 
 class PositionThese:
 
-    def __init__(self, src_path, metadata, textgroup_template, work_template, edition_template, refs_decl_template, xslt_encondingDesc,xslt_namespacedct):
+    def __init__(self, src_path, metadata, textgroup_template, work_template, edition_template, refs_decl_template, xslt_encondingDesc):
         self.__tg_template_filename = textgroup_template
         self.__w_template_filename = work_template
         self.__e_template_filename = edition_template
         self.__enconding_desc_template_filename = refs_decl_template
         self.__xslt_encodingDesc_filename = xslt_encondingDesc
-        self.__xslt_namespace_dct_filename = xslt_namespacedct
         self.__metadata = defaultdict(str)
         self.__src_path = src_path
         self.__nsti = {"ti": 'http://www.tei-c.org/ns/1.0'}
@@ -71,11 +74,6 @@ class PositionThese:
     def __xslt_encodingDesc(self):
         parser = etree.XMLParser()
         return ET.parse(self.__xslt_encodingDesc_filename, parser)
-
-    @property
-    def __xslt_namespacedct(self):
-        parser = etree.XMLParser()
-        return ET.parse(self.__xslt_namespace_dct_filename, parser)
 
     def write_to_file(self, filepath, tree):
         if not os.path.isfile(filepath):
@@ -133,6 +131,7 @@ class PositionThese:
     #Fonction qui écrit __capitains__.xml au niveau des éditions
     def write_work(self, folder_name, pos_year, dest_path, from_scratch=True):
         for meta in [m for m in self.__metadata.values() if folder_name.split("_")[1] == m["id"].split("_")[1]]:
+            cleanr = re.compile('<.*?>')
             # get a fresh new etree
             template = self.__wg_template
 
@@ -148,50 +147,102 @@ class PositionThese:
             for par in parent:
                 par.text = "ENCPOS_{0}".format(meta["promotion_year"])
 
-            if meta["author_name"] and meta["author_firstname"]:
-                creator = template.xpath("//dc:creator", namespaces=template.getroot().nsmap)
-                creator[0].text = "{0}, {1}".format(meta["author_name"], meta["author_firstname"])
+            if meta["author_fullname_label"] :
+                creator = template.xpath("//dct:creator", namespaces=template.getroot().nsmap)
+                creator[0].text = "{0}".format(meta["author_fullname_label"])
 
             titles = template.xpath("//dc:title", namespaces=template.getroot().nsmap)
             for tit in titles:
-                tit.text = "{0}".format(meta["title_text"])
+                if meta["title_rich"] == "":
+                    tit.text = "{0}".format(meta["title_text"])
+                else:
+                    tit.text = "{0}".format(re.sub(cleanr,'',meta["title_rich"]))
 
-            lang = template.find("//dc:language", namespaces=template.getroot().nsmap)
-            if meta["topic_notBefore"]:
-                coverage = ET.Element(etree.QName(DC_NS,"coverage"), nsmap={'dc': DC_NS})
-                coverage.text = "{0}-{1}".format(meta["topic_notBefore"], meta["topic_notAfter"])
-                lang.addnext(coverage)
+            titles = template.xpath("//dct:title", namespaces=template.getroot().nsmap)
+            for tit in titles:
+                if meta["title_rich"] == "":
+                    tit.text = "{0}".format(meta["title_text"])
+                else:
+                    tit.text = "{0}".format(re.sub(cleanr,'',meta["title_rich"]))
+
 
             #Ajout des valeurs dans les entrées dtc
-            pagination = template.xpath("//cpt:structured-metadata", namespaces=template.getroot().nsmap)
+            structuredMetadata = template.xpath("//cpt:structured-metadata", namespaces=template.getroot().nsmap)
+            elem = etree.Element(ET.QName(DCT_NS, "rights"), nsmap={'dct': DCT_NS})
+            elem.text = "https://creativecommons.org/licenses/by-nc-nd/3.0/fr/"
+            structuredMetadata[0].append(elem)
+
+            elem = etree.Element(ET.QName(HTML_NS, "h1"), nsmap={'xml': HTML_NS})
+            elem.text = "{0}".format(meta["title_rich"])
+            structuredMetadata[0].append(elem)
+
+            download_xml = etree.Element(ET.QName(DTS_NS, "download"), nsmap={'dts': DTS_NS})
+            download_xml.text = "https://github.com/chartes/encpos/raw/master/data/ENCPOS_{0}/{1}.xml".format(meta["promotion_year"],meta["id"] )
+            structuredMetadata[0].append(download_xml)
+
+            download_pdf = etree.Element(ET.QName(DTS_NS, "download"), nsmap={'dts': DTS_NS})
+            download_pdf.text = "https://github.com/chartes/encpos/raw/master/data/ENCPOS_{0}/{1}.PDF".format(meta["promotion_year"],meta["id"] )
+            structuredMetadata[0].append(download_pdf)
+
             if meta["pagination"]:
-                page = etree.Element("extend")
-                page.text = meta["pagination"]
-                pagination[0].append(page)
+                elem = etree.Element(ET.QName(DCT_NS, "extend"), nsmap={'dct': DCT_NS})
+                elem.text = meta["pagination"]
+                structuredMetadata[0].append(elem)
+            if meta["topic_notBefore"]:
+                elem = etree.Element(ET.QName(DCT_NS, "coverage"), nsmap={'dct': DCT_NS})
+                elem.text = "{0}-{1}".format(meta["topic_notBefore"], meta["topic_notAfter"])
+                structuredMetadata[0].append(elem)
 
-            if meta["author_idref-id"]:
-                page = etree.Element("creator")
-                page.text = "{0}{1}".format("https://www.idref.fr/", meta["author_idref-id"])
-                pagination[0].append(page)
 
-            if meta["these_ppn-sudoc"]:
-                page = etree.Element("isPartOf")
-                page.text = "{0}{1}".format("https://www.sudoc.fr/", meta["these_ppn-sudoc"])
-                pagination[0].append(page)
+            if meta["author_idref_ppn"]:
+                elem = etree.Element(ET.QName(DCT_NS, "creator"), nsmap={'dct': DCT_NS})
+                elem.text = "{0}{1}".format("https://www.idref.fr/", meta["author_idref_ppn"])
+                structuredMetadata[0].append(elem)
+            if meta["author_bnf_ark"]:
+                elem = etree.Element(ET.QName(DCT_NS, "creator"), nsmap={'dct': DCT_NS})
+                elem.text = "https://catalogue.bnf.fr/{0}".format(meta["author_bnf_ark"])
+                structuredMetadata[0].append(elem)
+                elem = etree.Element(ET.QName(DCT_NS, "creator"), nsmap={'dct': DCT_NS})
+                elem.text = "https://data.bnf.fr/{0}".format(meta["author_bnf_ark"])
+                structuredMetadata[0].append(elem)
+            if meta["author_wikidata_id"]:
+                elem = etree.Element(ET.QName(DCT_NS, "creator"), nsmap={'dct': DCT_NS})
+                elem.text = "https://wikidata.org/entity/{0}".format(meta["author_wikidata_id"])
+                structuredMetadata[0].append(elem)
+            if meta["author_wikipedia_url"]:
+                elem = etree.Element(ET.QName(DCT_NS, "creator"), nsmap={'dct': DCT_NS})
+                elem.text = "{0}".format(meta["author_wikipedia_url"])
+                structuredMetadata[0].append(elem)
+            if meta["author_dbpedia_id"]:
+                elem = etree.Element(ET.QName(DCT_NS, "creator"), nsmap={'dct': DCT_NS})
+                elem.text = "https://dbpedia.org/resource/{0}".format(meta["author_dbpedia_id"])
+                structuredMetadata[0].append(elem)
+            #Ajouter ici les informations pour wikidata, wikipedia, wikidata
+            if meta["sudoc_these-record_ppn"]:
+                elem = etree.Element(ET.QName(DCT_NS, "isVersionOf"), nsmap={'dct': DCT_NS})
+                elem.text = "{0}{1}".format("https://www.sudoc.fr/", meta["sudoc_these-record_ppn"])
+                structuredMetadata[0].append(elem)
+            if meta["thenca_these-record_id"]:
+                elem = etree.Element(ET.QName(DCT_NS, "isVersionOf"), nsmap={'dct': DCT_NS})
+                elem.text = "{0}{1}".format("http://bibnum.chartes.psl.eu/s/thenca/item/", meta["thenca_these-record_id"])
+                structuredMetadata[0].append(elem)
+            if meta["hal-these-record_id"]:
+                elem = etree.Element(ET.QName(DCT_NS, "isVersionOf"), nsmap={'dct': DCT_NS})
+                elem.text = "{0}{1}".format("https://halshs.archives-ouvertes.fr/", meta["hal-these-record_id"])
+                structuredMetadata[0].append(elem)
             #Ajout l'entrée these biblio-ben
-            if meta["these_biblionumber-benc"]:
-                page = etree.Element("isPartOf")
-                page.text = "{0}{1}".format("benc_number: ", meta["these_biblionumber-benc"])
-                pagination[0].append(page)
+            if meta["benc_these-record-id"]:
+                elem = etree.Element(ET.QName(DCT_NS, "isVersionOf"), nsmap={'dct': DCT_NS})
+                elem.text = "https://catalogue.chartes.psl.eu/cgi-bin/koha/opac-detail.pl?biblionumber={1}".format("benc_number: ", meta["benc_these-record-id"])
+                structuredMetadata[0].append(elem)
 
-            # Ajoute les prefix dct automatiquement dans les balises qui viennent d'être ajouté dans cpt:structured-metadata
-            transfrom = self.__xslt_namespacedct
-            transfrom = etree.XSLT(transfrom)
-            template = transfrom(template)
+            if int(meta["promotion_year"]) < 2000:
+                elem = etree.Element(ET.QName(DCT_NS, "source"), nsmap={'dct': DCT_NS})
+                elem.text = "https://iiif.chartes.psl.eu/encpos/{}/manifest".format(meta["id"].lower())
+                structuredMetadata[0].append(elem)
 
-            year = template.xpath("//dc:date", namespaces=template.getroot().nsmap)
+            year = template.xpath("//dct:date", namespaces=template.getroot().nsmap)
             year[0].text = pos_year
-
 
             if work is None:
                 raise ValueError('No work detected in the work template document')
@@ -242,7 +293,7 @@ class PositionThese:
             src_edition = transfrom(src_edition)
             header = src_edition.find("//ti:encodingDesc", namespaces=self.__nsti)
             header.append(refs_decl.getroot())
-
+            """
             #Ajout du titlerich des metadonnées
             title = src_edition.xpath("//ti:titleStmt//ti:title", namespaces=self.__nsti)
             title[0].text = meta["title_text"]
@@ -250,6 +301,7 @@ class PositionThese:
             #Ajout de l'identifier dans le fichier XML ENCPOS
 
             # test la présence de la balise auteur et la rajoute
+            #Ajout d'un traitement pour passer le title_rich du format html au format TEI
             auth = src_edition.xpath("//ti:teiHeader//ti:author", namespaces=self.__nsti)
             if not auth:
                 auth = src_edition.xpath("//ti:titleStmt", namespaces=self.__nsti)
@@ -262,9 +314,8 @@ class PositionThese:
             # Ajout de la promotion
             pub_date = src_edition.xpath("//ti:teiHeader//ti:publicationStmt/ti:date", namespaces=self.__nsti)
             pub_date[0].set("when", meta["promotion_year"])
+            """
 
-            part_index = 1
-            part_p = 1
             body = src_edition.xpath("//ti:body", namespaces=self.__nsti)
             body[0].set("type", "textpart")
             body[0].set("subtype", "position")

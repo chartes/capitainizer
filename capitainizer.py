@@ -13,7 +13,7 @@ if __name__ == "__main__":
     for direct in list_dir:
         if not os.path.isdir(os.path.join(SRC_PATH, direct)):
             list_dir.remove(direct)
-    pt = PositionThese(SRC_PATH, METADATA, 'templates/__capitains_collection.xml', 'templates/__capitains_work.xml', 'templates/edition.xml', 'templates/refs_decl.xml', 'templates/Add_EncodingDesc.xsl', 'templates/Add_namespacedct.xsl')
+    pt = PositionThese(SRC_PATH, METADATA, 'templates/__capitains_collection.xml', 'templates/__capitains_work.xml', 'templates/edition.xml', 'templates/refs_decl.xml', 'templates/Add_EncodingDesc.xsl')
     year = None
     pt.write_textgroup(year, DEST_PATH, list_dir)
     for folder_name in list_dir:
