@@ -177,11 +177,11 @@ class PositionThese:
             structuredMetadata[0].append(elem)
 
             download_xml = etree.Element(ET.QName(DTS_NS, "download"), nsmap={'dts': DTS_NS})
-            download_xml.text = "https://github.com/chartes/encpos/raw/master/data/ENCPOS_{0}/{1}.xml".format(meta["promotion_year"],meta["id"] )
+            download_xml.text = "https://github.com/chartes/encpos/raw/metadata/data/ENCPOS_{0}/{1}.xml".format(meta["promotion_year"],meta["id"] )
             structuredMetadata[0].append(download_xml)
 
             download_pdf = etree.Element(ET.QName(DTS_NS, "download"), nsmap={'dts': DTS_NS})
-            download_pdf.text = "https://github.com/chartes/encpos/raw/master/data/ENCPOS_{0}/{1}.PDF".format(meta["promotion_year"],meta["id"] )
+            download_pdf.text = "https://github.com/chartes/encpos/raw/metadata/data/ENCPOS_{0}/{1}.PDF".format(meta["promotion_year"],meta["id"] )
             structuredMetadata[0].append(download_pdf)
 
             if meta["pagination"]:
@@ -231,9 +231,9 @@ class PositionThese:
                 elem.text = "{0}{1}".format("https://halshs.archives-ouvertes.fr/", meta["hal-these-record_id"])
                 structuredMetadata[0].append(elem)
             #Ajout l'entrée these biblio-ben
-            if meta["benc_these-record-id"]:
+            if meta["benc_these-record_id"]:
                 elem = etree.Element(ET.QName(DCT_NS, "isVersionOf"), nsmap={'dct': DCT_NS})
-                elem.text = "https://catalogue.chartes.psl.eu/cgi-bin/koha/opac-detail.pl?biblionumber={1}".format("benc_number: ", meta["benc_these-record-id"])
+                elem.text = "https://catalogue.chartes.psl.eu/cgi-bin/koha/opac-detail.pl?biblionumber={1}".format("benc_number: ", meta["benc_these-record_id"])
                 structuredMetadata[0].append(elem)
 
             if int(meta["promotion_year"]) < 2000:
