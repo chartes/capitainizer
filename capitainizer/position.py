@@ -190,7 +190,7 @@ class PositionThese:
                 structuredMetadata[0].append(elem)
             if meta["topic_notBefore"]:
                 elem = etree.Element(ET.QName(DCT_NS, "coverage"), nsmap={'dct': DCT_NS})
-                elem.text = "{0}-{1}".format(meta["topic_notBefore"], meta["topic_notAfter"])
+                elem.text = "{0}/{1}".format(meta["topic_notBefore"], meta["topic_notAfter"])
                 structuredMetadata[0].append(elem)
 
 
