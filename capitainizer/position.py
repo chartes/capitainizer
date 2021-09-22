@@ -179,10 +179,10 @@ class PositionThese:
             download_xml = etree.Element(ET.QName(DTS_NS, "download"), nsmap={'dts': DTS_NS})
             download_xml.text = "https://github.com/chartes/encpos/raw/metadata/data/ENCPOS_{0}/{1}.xml".format(meta["promotion_year"],meta["id"] )
             structuredMetadata[0].append(download_xml)
-
-            download_pdf = etree.Element(ET.QName(DTS_NS, "download"), nsmap={'dts': DTS_NS})
-            download_pdf.text = "https://github.com/chartes/encpos/raw/metadata/data/ENCPOS_{0}/{1}.PDF".format(meta["promotion_year"],meta["id"] )
-            structuredMetadata[0].append(download_pdf)
+            if int(meta['promotion_year']) < 2000:
+                download_pdf = etree.Element(ET.QName(DTS_NS, "download"), nsmap={'dts': DTS_NS})
+                download_pdf.text = "https://github.com/chartes/encpos/raw/metadata/data/ENCPOS_{0}/{1}.PDF".format(meta["promotion_year"],meta["id"] )
+                structuredMetadata[0].append(download_pdf)
 
             if meta["pagination"]:
                 elem = etree.Element(ET.QName(DCT_NS, "extend"), nsmap={'dct': DCT_NS})
@@ -242,7 +242,7 @@ class PositionThese:
                 structuredMetadata[0].append(elem)
 
             year = template.xpath("//dct:date", namespaces=template.getroot().nsmap)
-            year[0].text = pos_year
+            year[0].text = meta["promotion_year"]
 
             if work is None:
                 raise ValueError('No work detected in the work template document')
