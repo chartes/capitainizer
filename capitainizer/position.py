@@ -79,8 +79,8 @@ class PositionThese:
         if not os.path.isfile(filepath):
             with open(filepath, 'w') as f:
                 #tree_str = ET.tounicode(tree, pretty_print=True)
-                etree.indent(tree, space="    ")
-                tree_str = etree.tostring(tree, pretty_print=True, encoding='unicode')
+                #etree.indent(tree, space="  ")
+                tree_str = etree.tostring(tree, pretty_print=True, doctype='<?xml version="1.0" encoding="utf-8"?>', encoding='unicode')
                 f.write(tree_str)
 
     def write_textgroup(self,  pos_year, dest_path, list_works):
@@ -271,9 +271,9 @@ class PositionThese:
 
     #Ecriture de la position avec les nouvelles valeurs
     def write_edition(self, folder_name, pos_year, src_path, dest_path):
-        refs_decl = self.__refs_decl_template
         for meta in [m for m in self.__metadata.values() if folder_name.split("_")[1] == m["id"].split("_")[1]]:
             template = self.__e_template
+            refs_decl = self.__refs_decl_template
             e_dirname = os.path.join(dest_path, folder_name , "{0}".format(meta["id"]))
             e_filepath = os.path.join(e_dirname, "{0}.xml".format(
                 "{0}".format(meta["id"])
@@ -288,11 +288,16 @@ class PositionThese:
                 continue
 
             #Si il y a pas d'encodingDesc refs_decl
-            transfrom = self.__xslt_encodingDesc
-            transfrom = etree.XSLT(transfrom)
-            src_edition = transfrom(src_edition)
-            header = src_edition.find("//ti:encodingDesc", namespaces=self.__nsti)
-            header.append(refs_decl.getroot())
+            #transfrom = self.__xslt_encodingDesc
+            #transfrom = etree.XSLT(transfrom)
+            #src_edition = transfrom(src_edition)
+            #header = src_edition.find("//ti:encodingDesc", namespaces=self.__nsti)
+            #header.append(refs_decl.getroot())
+            TEIheader = src_edition.xpath("//ti:teiHeader", namespaces={"ti": 'http://www.tei-c.org/ns/1.0'})
+            TEIheader[0].append(refs_decl.getroot())
+            etree.strip_tags(TEIheader[0], 'temp')
+            #temp = src_edition.xpath("//temp", namespaces={"ti": 'http://www.tei-c.org/ns/1.0'})
+            #temp[0].drop_tag()
             """
             #Ajout du titlerich des metadonnées
             title = src_edition.xpath("//ti:titleStmt//ti:title", namespaces=self.__nsti)
