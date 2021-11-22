@@ -44,9 +44,12 @@ class PositionThese:
         parts = filter(None, parts)
         return ''.join(parts).strip()
 
-    def src_edition(self, folder_name, id):
+    def src_edition(self, id, folder_name = None):
         parser = etree.XMLParser()
-        src_edition_fn = os.path.join(self.__src_path, folder_name, "{0}.xml".format(id))
+        if folder_name in self.__src_path:
+            src_edition_fn = os.path.join(self.__src_path, "{0}.xml".format(id))
+        else:
+            src_edition_fn = os.path.join(self.__src_path, folder_name, "{0}.xml".format(id))
         if not os.path.isfile(src_edition_fn):
             return ET.Element("div")
         return ET.parse(src_edition_fn, parser)
@@ -147,10 +150,6 @@ class PositionThese:
             for par in parent:
                 par.text = "ENCPOS_{0}".format(meta["promotion_year"])
 
-            if meta["author_fullname_label"] :
-                creator = template.xpath("//dct:creator", namespaces=template.getroot().nsmap)
-                creator[0].text = "{0}".format(meta["author_fullname_label"])
-
             titles = template.xpath("//dc:title", namespaces=template.getroot().nsmap)
             for tit in titles:
                 if meta["title_rich"] == "":
@@ -193,6 +192,10 @@ class PositionThese:
                 elem.text = "{0}/{1}".format(meta["topic_notBefore"], meta["topic_notAfter"])
                 structuredMetadata[0].append(elem)
 
+            if meta["author_fullname_label"] :
+                elem = etree.Element(ET.QName(DC_NS, "creator"), nsmap={'dc': DC_NS})
+                elem.text = "{0}".format(meta["author_fullname_label"])
+                structuredMetadata[0].append(elem)
 
             if meta["author_idref_ppn"]:
                 elem = etree.Element(ET.QName(DCT_NS, "creator"), nsmap={'dct': DCT_NS})
@@ -249,10 +252,10 @@ class PositionThese:
             else:
                 # title
                 if from_scratch is False:
-                    src_edition = self.src_edition(folder_name, meta["id"])
+                    src_edition = self.src_edition(meta["id"], folder_name)
                     titles = src_edition.xpath("//ti:teiHeader//ti:titleStmt//ti:title", namespaces=self.__nsti)
                 else:
-                    src_edition = self.src_edition(folder_name, meta["id"])
+                    src_edition = self.src_edition(meta["id"], folder_name)
                     titles = src_edition.xpath("//ti:front/ti:head", namespaces=self.__nsti)
 
                 # Méthode pour encapsuler les données et ajouter au niveau du root
@@ -279,25 +282,19 @@ class PositionThese:
                 "{0}".format(meta["id"])
             ))
 
-            src_edition = self.src_edition(folder_name, meta["id"])
+            src_edition = self.src_edition(meta["id"], folder_name)
             root = src_edition.xpath('//ti:text', namespaces=self.__nsti)
+
             try:
                 root[0].set("{0}base".format("{" + XML_NS + "}"), "{0}".format(meta["id"]))
             except:
                 print(meta["id"] + "not present")
                 continue
 
-            #Si il y a pas d'encodingDesc refs_decl
-            #transfrom = self.__xslt_encodingDesc
-            #transfrom = etree.XSLT(transfrom)
-            #src_edition = transfrom(src_edition)
-            #header = src_edition.find("//ti:encodingDesc", namespaces=self.__nsti)
-            #header.append(refs_decl.getroot())
             TEIheader = src_edition.xpath("//ti:teiHeader", namespaces={"ti": 'http://www.tei-c.org/ns/1.0'})
             TEIheader[0].append(refs_decl.getroot())
             etree.strip_tags(TEIheader[0], 'temp')
-            #temp = src_edition.xpath("//temp", namespaces={"ti": 'http://www.tei-c.org/ns/1.0'})
-            #temp[0].drop_tag()
+
             """
             #Ajout du titlerich des metadonnées
             title = src_edition.xpath("//ti:titleStmt//ti:title", namespaces=self.__nsti)
@@ -333,7 +330,7 @@ class PositionThese:
 
         for meta in [m for m in self.__metadata.values() if m["promotion_year"] == pos_year]:
             # get a fresh new etree
-            template = self.src_edition(folder_name, meta["id"])
+            template = self.src_edition(meta["id"], folder_name)
 
             e_dirname = os.path.join(dest_path, "ENCPOS_{0}".format(meta["promotion_year"]), "ENCPOS_{0}".format(meta["id"]))
 

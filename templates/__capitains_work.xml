@@ -3,17 +3,16 @@
    <cpt:identifier></cpt:identifier>
    <cpt:parent></cpt:parent>
    <dc:title xml:lang="fre"></dc:title>
-   <dc:type>dts:work</dc:type>
+   <dc:type>dts:Resource</dc:type>
    <cpt:members>
       <cpt:collection readable="true" path="">
          <cpt:identifier></cpt:identifier>
          <cpt:parent></cpt:parent>
          <dc:title xml:lang="fre"></dc:title>
-         <dc:type>dts:edition</dc:type>
+         <dc:type>dts:Resource</dc:type>
          <dc:language>fre</dc:language>
          <cpt:structured-metadata>
             <dct:title xml:lang="fre"></dct:title>
-            <dct:creator></dct:creator>
             <dct:date></dct:date>
             <!-- voir dc:creation -->
             <dct:publisher xml:lang="mul">École des chartes, Paris</dct:publisher>

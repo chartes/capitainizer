@@ -1,6 +1,8 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<refsDecl n="capitains">
-  <cRefPattern n="position" matchPattern="(\w+)" replacementPattern="#xpath(/tei:TEI/tei:text/tei:body[@n='$1'])">
-    <p>This pointer pattern extracts introduction, sources, parts, conclusion and appendix</p>
-  </cRefPattern>
-</refsDecl>
+<temp>  <encodingDesc>
+      <refsDecl n="capitains">
+        <cRefPattern n="position" matchPattern="(\w+)" replacementPattern="#xpath(/tei:TEI/tei:text/tei:body[@n='$1'])">
+          <p>This pointer pattern extracts introduction, sources, parts, conclusion and appendix</p>
+        </cRefPattern>
+      </refsDecl>
+    </encodingDesc>
+  </temp>
