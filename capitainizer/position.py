@@ -6,9 +6,7 @@ import re
 
 import lxml.etree as ET
 from lxml import etree
-import copy
 import shutil
-from datetime import date
 
 CTS_NS = "http://chs.harvard.edu/xmlns/cts"
 XML_NS = "http://www.w3.org/XML/1998/namespace"
@@ -87,6 +85,7 @@ class PositionThese:
                 f.write(tree_str)
 
     def write_textgroup(self,  pos_year, dest_path, list_works):
+        #reprendre write_textgroup
         # get a fresh new etree
         template = self.__tg_template
         # Update the URN part : pos -> pos2015
@@ -176,11 +175,11 @@ class PositionThese:
             structuredMetadata[0].append(elem)
 
             download_xml = etree.Element(ET.QName(DTS_NS, "download"), nsmap={'dts': DTS_NS})
-            download_xml.text = "https://github.com/chartes/encpos/raw/metadata/data/ENCPOS_{0}/{1}.xml".format(meta["promotion_year"],meta["id"] )
+            download_xml.text = "https://theses.chartes.psl.eu/dts/document?id={0}".format(meta["id"] )
             structuredMetadata[0].append(download_xml)
             if int(meta['promotion_year']) < 2000:
                 download_pdf = etree.Element(ET.QName(DTS_NS, "download"), nsmap={'dts': DTS_NS})
-                download_pdf.text = "https://github.com/chartes/encpos/raw/metadata/data/ENCPOS_{0}/{1}.PDF".format(meta["promotion_year"],meta["id"] )
+                download_pdf.text = "https://github.com/chartes/encpos/raw/master/data/ENCPOS_{0}/{1}.PDF".format(meta["promotion_year"],meta["id"] )
                 structuredMetadata[0].append(download_pdf)
 
             if meta["pagination"]:
@@ -227,7 +226,7 @@ class PositionThese:
                 structuredMetadata[0].append(elem)
             if meta["thenca_these-record_id"]:
                 elem = etree.Element(ET.QName(DCT_NS, "isVersionOf"), nsmap={'dct': DCT_NS})
-                elem.text = "{0}{1}".format("http://bibnum.chartes.psl.eu/s/thenca/item/", meta["thenca_these-record_id"])
+                elem.text = "{0}{1}".format("https://bibnum.chartes.psl.eu/s/thenca/item/", meta["thenca_these-record_id"])
                 structuredMetadata[0].append(elem)
             if meta["hal-these-record_id"]:
                 elem = etree.Element(ET.QName(DCT_NS, "isVersionOf"), nsmap={'dct': DCT_NS})
@@ -250,19 +249,6 @@ class PositionThese:
             if work is None:
                 raise ValueError('No work detected in the work template document')
             else:
-                # title
-                if from_scratch is False:
-                    src_edition = self.src_edition(meta["id"], folder_name)
-                    titles = src_edition.xpath("//ti:teiHeader//ti:titleStmt//ti:title", namespaces=self.__nsti)
-                else:
-                    src_edition = self.src_edition(meta["id"], folder_name)
-                    titles = src_edition.xpath("//ti:front/ti:head", namespaces=self.__nsti)
-
-                # Méthode pour encapsuler les données et ajouter au niveau du root
-                #template.getroot().insert(0, self.encapsulate("title", titles[0], CTS_NS))
-
-
-
                 # make workgroup dir
                 w_dirname = os.path.join(dest_path, folder_name, "{0}".format(meta["id"]))
                 if os.path.isdir(w_dirname):
@@ -273,9 +259,8 @@ class PositionThese:
         return True
 
     #Ecriture de la position avec les nouvelles valeurs
-    def write_edition(self, folder_name, pos_year, src_path, dest_path):
+    def write_edition(self, folder_name, dest_path):
         for meta in [m for m in self.__metadata.values() if folder_name.split("_")[1] == m["id"].split("_")[1]]:
-            template = self.__e_template
             refs_decl = self.__refs_decl_template
             e_dirname = os.path.join(dest_path, folder_name , "{0}".format(meta["id"]))
             e_filepath = os.path.join(e_dirname, "{0}.xml".format(
@@ -294,29 +279,6 @@ class PositionThese:
             TEIheader = src_edition.xpath("//ti:teiHeader", namespaces={"ti": 'http://www.tei-c.org/ns/1.0'})
             TEIheader[0].append(refs_decl.getroot())
             etree.strip_tags(TEIheader[0], 'temp')
-
-            """
-            #Ajout du titlerich des metadonnées
-            title = src_edition.xpath("//ti:titleStmt//ti:title", namespaces=self.__nsti)
-            title[0].text = meta["title_text"]
-
-            #Ajout de l'identifier dans le fichier XML ENCPOS
-
-            # test la présence de la balise auteur et la rajoute
-            #Ajout d'un traitement pour passer le title_rich du format html au format TEI
-            auth = src_edition.xpath("//ti:teiHeader//ti:author", namespaces=self.__nsti)
-            if not auth:
-                auth = src_edition.xpath("//ti:titleStmt", namespaces=self.__nsti)
-                author = etree.Element("author", nsmap=self.__nsti)
-                author.text ="{1} {0}".format(meta["author_name"], meta["author_firstname"])
-                auth[0].append(author)
-            else:
-                auth[0].text = "{1} {0}".format(meta["author_name"], meta["author_firstname"])
-
-            # Ajout de la promotion
-            pub_date = src_edition.xpath("//ti:teiHeader//ti:publicationStmt/ti:date", namespaces=self.__nsti)
-            pub_date[0].set("when", meta["promotion_year"])
-            """
 
             body = src_edition.xpath("//ti:body", namespaces=self.__nsti)
             body[0].set("type", "textpart")

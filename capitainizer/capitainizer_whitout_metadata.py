@@ -1,6 +1,5 @@
 import os
 from itertools import chain
-import re
 
 import lxml.etree as ET
 from lxml import etree
@@ -116,6 +115,7 @@ class Capitainizer_files:
         return ET.fromstring("<ti:{0} xmlns:ti='{1}' xml:lang='fr'>{2}</ti:{0}>".format(
             tag, ns, self.stringify(node))
         )
+
     def obtain_metadata (self, folder_name, id):
         meta = {}
         src_edition = self.src_edition(id, folder_name)
@@ -129,7 +129,7 @@ class Capitainizer_files:
         return meta
 
     #Fonction qui écrit __capitains__.xml au niveau des éditions
-    def write_work(self, folder_name, pos_year, dest_path, list_works, from_scratch=True):
+    def write_work(self, folder_name, dest_path, list_works, from_scratch=True):
         for works in list_works:
             meta = self.obtain_metadata(folder_name, works)
             template = self.__wg_template
@@ -150,7 +150,6 @@ class Capitainizer_files:
             for tit in titles:
                 tit.text = meta["title"]
 
-
             #Ajout des valeurs dans les entrées dtc
             structuredMetadata = template.xpath("//cpt:structured-metadata", namespaces=template.getroot().nsmap)
             elem = etree.Element(ET.QName(DCT_NS, "rights"), nsmap={'dct': DCT_NS})
@@ -168,14 +167,6 @@ class Capitainizer_files:
             if work is None:
                 raise ValueError('No work detected in the work template document')
             else:
-                # title
-                if from_scratch is False:
-                    src_edition = self.src_edition(meta["id"], folder_name)
-                    titles = src_edition.xpath("//ti:teiHeader//ti:titleStmt//ti:title", namespaces=self.__nsti)
-                else:
-                    src_edition = self.src_edition(meta["id"], folder_name)
-                    titles = src_edition.xpath("//ti:front/ti:head", namespaces=self.__nsti)
-
                 # make workgroup dir
                 w_dirname = os.path.join(dest_path, folder_name, "{0}".format(meta["id"]))
                 if os.path.isdir(w_dirname):
@@ -186,7 +177,7 @@ class Capitainizer_files:
         return True
 
     #Ecriture de la position avec les nouvelles valeurs
-    def write_edition(self, folder_name, pos_year, src_path, dest_path, list_works):
+    def write_edition(self, folder_name, dest_path, list_works):
         for work in list_works:
             refs_decl = self.__refs_decl_template
             e_dirname = os.path.join(dest_path, folder_name , "{0}".format(work.replace(".xml", "")))

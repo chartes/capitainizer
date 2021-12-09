@@ -28,6 +28,7 @@ def main(input, metadata, output):
     list_dir = []
     for name_dir in list_file_or_dir:
         if os.path.isdir(os.path.join(SRC_PATH, name_dir)):
+            #Ajouter le nom des dossiers que vous ne souhaitez pas capitanizer
             list_dir.append(name_dir)
 
     folder_name = None
@@ -55,11 +56,11 @@ def main(input, metadata, output):
             year = folder_name.split("_")[-1]
             if pt.write_textgroup(year, DEST_PATH, list_works):
                 if pt.write_work(folder_name, year, DEST_PATH):
-                    pt.write_edition(folder_name, year, SRC_PATH, DEST_PATH)
+                    pt.write_edition(folder_name, DEST_PATH)
         else:
             if cpt.write_textgroup(folder_name, DEST_PATH, list_works):
-                if cpt.write_work(folder_name, year, DEST_PATH, list_works):
-                    cpt.write_edition(folder_name, year, SRC_PATH, DEST_PATH, list_works)
+                if cpt.write_work(folder_name, DEST_PATH, list_works):
+                    cpt.write_edition(folder_name, DEST_PATH, list_works)
 
 
 
