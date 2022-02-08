@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="../../capitains.rng" schematypens="http://relaxng.org/ns/structure/1.0"?>
+<cpt:collection
+        xmlns:dc="http://purl.org/dc/elements/1.1/"
+        xmlns:cpt="http://purl.org/capitains/ns/1.0#"
+        xmlns:bib="http://bibliotek-o.org/1.0/ontology/">
+   <cpt:identifier>miroir</cpt:identifier>
+   <dc:title xml:lang="fre">Le miroir des classiques</dc:title>
+   <dc:type>dts:Collection</dc:type>
+    <dc:publisher>Ecole nationale des chartes</dc:publisher>
+   <cpt:structured-metadata>
+       <bib:AbbreviatedTitle>Le miroir des classiques</bib:AbbreviatedTitle>
+   </cpt:structured-metadata>
+    <cpt:members>
+    </cpt:members>
+</cpt:collection>
