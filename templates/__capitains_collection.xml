@@ -4,12 +4,12 @@
         xmlns:dc="http://purl.org/dc/elements/1.1/"
         xmlns:cpt="http://purl.org/capitains/ns/1.0#"
         xmlns:bib="http://bibliotek-o.org/1.0/ontology/">
-   <cpt:identifier>ENCPOS</cpt:identifier>
-   <dc:title xml:lang="fre">Les positions des thèses de l'Ecole nationale des chartes</dc:title>
+   <cpt:identifier></cpt:identifier>
+   <dc:title xml:lang="fre"></dc:title>
    <dc:type>dts:Collection</dc:type>
     <dc:publisher>Ecole nationale des chartes</dc:publisher>
    <cpt:structured-metadata>
-       <bib:AbbreviatedTitle>Positions de thèses de l'Ecole nationale des chartes</bib:AbbreviatedTitle>
+       <bib:AbbreviatedTitle></bib:AbbreviatedTitle>
    </cpt:structured-metadata>
     <cpt:members>
     </cpt:members>

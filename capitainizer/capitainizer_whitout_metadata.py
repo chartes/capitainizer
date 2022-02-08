@@ -81,6 +81,7 @@ class Capitainizer_files:
         if textgroup is None:
             raise ValueError('No textgroup detected in the textgroup template document')
         elif folder_name is None:
+            print(list_works)
             # Information correspond aux templates donc à mettre à jour en fonction du contexte
             textgroup[0].text = "{0}".format(textgroup[0].text)
             groupname = template.xpath("//dc:title", namespaces=template.getroot().nsmap)
@@ -88,17 +89,18 @@ class Capitainizer_files:
             # écrire les membres par année
             collection = (template.xpath("//cpt:members", namespaces=template.getroot().nsmap))
             for work in sorted(list_works):
+                print(work.split(".")[0])
                 w = etree.SubElement(collection[0], etree.QName(CPT_NS, "collection"))
                 w.attrib["path"] = "./{0}/__capitains__.xml".format(work.split(".")[0])
                 w.attrib["identifier"] = work.split(".")[0]
-            print(dest_path)
+            print(etree.tostring(template))
             self.write_to_file(os.path.join(dest_path, "__capitains__.xml"), template)
             return True
         else:
             #Choisir une méthode pour mettre à jour ces infos qui concernent le titre et la position
             textgroup[0].text = "{0}".format(folder_name)
             groupname = template.xpath("//dc:title", namespaces=template.getroot().nsmap)
-            groupname[0].text = "{0} de {1}".format(groupname[0].text, folder_name)
+            groupname[0].text = "{0} : {1}".format(groupname[0].text, folder_name)
             # Ecrit les membres par année
             collection = (template.xpath("//cpt:members", namespaces=template.getroot().nsmap))
             for work in sorted(list_works):
@@ -120,7 +122,13 @@ class Capitainizer_files:
         meta = {}
         src_edition = self.src_edition(id, folder_name)
         meta["id"] = id.replace(".xml", "")
-        meta["title"] = src_edition.xpath('//ti:titleStmt/ti:title', namespaces=self.__nsti)[0].text
+        title = src_edition.xpath('//ti:titleStmt/ti:title/node()', namespaces=self.__nsti)
+        if type(title[0]) == etree._ElementUnicodeResult:
+            meta["title"] = title[0]
+        else:
+            title[0].tag = "i"
+            meta["title"] = etree.tostring(title[0], encoding='unicode')
+            meta["title"] = meta["title"].replace(' xmlns="http://www.tei-c.org/ns/1.0" rend="i"', "")
         try:
             meta["author"] = src_edition.xpath('//ti:titleStmt/ti:author', namespaces=self.__nsti)[0].text
         except:
@@ -136,7 +144,7 @@ class Capitainizer_files:
 
             #Ajout des valeurs du tableau dans les valeurs dublin core classique
             work = template.xpath("//cpt:members/cpt:collection", namespaces=template.getroot().nsmap)
-            work[0].attrib["path"] = meta["id"]
+            work[0].attrib["path"] = "./{0}.xml".format(meta["id"])
 
             identifier = template.xpath("//cpt:identifier", namespaces=template.getroot().nsmap)
             for ide in identifier:
@@ -150,6 +158,8 @@ class Capitainizer_files:
             for tit in titles:
                 tit.text = meta["title"]
 
+
+
             #Ajout des valeurs dans les entrées dtc
             structuredMetadata = template.xpath("//cpt:structured-metadata", namespaces=template.getroot().nsmap)
             elem = etree.Element(ET.QName(DCT_NS, "rights"), nsmap={'dct': DCT_NS})
@@ -160,6 +170,10 @@ class Capitainizer_files:
                 elem = etree.Element(ET.QName(DC_NS, "creator"), nsmap={'dc': DC_NS})
                 elem.text = "{0}".format(meta["author"])
                 structuredMetadata[0].append(elem)
+
+            elem = etree.Element(ET.QName(HTML_NS, "h1"), nsmap={'xml': HTML_NS})
+            elem.text = "{0}".format(meta["title"])
+            structuredMetadata[0].append(elem)
 
             year = template.xpath("//dct:date", namespaces=template.getroot().nsmap)
             year[0].text = meta["promotion_year"]
