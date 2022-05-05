@@ -4,7 +4,7 @@
         xmlns:dc="http://purl.org/dc/elements/1.1/"
         xmlns:cpt="http://purl.org/capitains/ns/1.0#"
         xmlns:bib="http://bibliotek-o.org/1.0/ontology/">
-   <cpt:identifier></cpt:identifier>
+   <cpt:identifier>ENCPOS</cpt:identifier>
    <dc:title xml:lang="fre"></dc:title>
    <dc:type>dts:Collection</dc:type>
     <dc:publisher>Ecole nationale des chartes</dc:publisher>

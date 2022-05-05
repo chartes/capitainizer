@@ -104,6 +104,7 @@ class PositionThese:
                 w = etree.SubElement(collection[0], etree.QName(CPT_NS, "collection"))
                 w.attrib["path"] = "./{0}/__capitains__.xml".format(work.split(".")[0])
                 w.attrib["identifier"] = work.split(".")[0]
+            print(etree.tostring(collection[0]))
             self.write_to_file(os.path.join(dest_path, "__capitains__.xml"), template)
             return True
         else:
@@ -121,7 +122,6 @@ class PositionThese:
             tg_dirname = os.path.join(dest_path, textgroup[0].text)
             if not os.path.isdir(tg_dirname):
                 os.makedirs(tg_dirname)
-
             self.write_to_file(os.path.join(tg_dirname, "__capitains__.xml"), template)
             return True
 
@@ -132,6 +132,8 @@ class PositionThese:
 
     #Fonction qui écrit __capitains__.xml au niveau des éditions
     def write_work(self, folder_name, pos_year, dest_path, from_scratch=True):
+        if not "ENCPOS" in folder_name:
+            exit()
         for meta in [m for m in self.__metadata.values() if folder_name.split("_")[1] == m["id"].split("_")[1]]:
             cleanr = re.compile('<.*?>')
             # get a fresh new etree

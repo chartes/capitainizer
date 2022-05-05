@@ -12,11 +12,18 @@ METADATA = '../encpos/data/encpos.tsv'
 #transformer ça en cli avec des possibilités de faire un dossier, l'intégral ou rien du tout
 
 @click.command()
-@click.option('--input', type=str, help='Enter the name of the folder who contains the XML files or the differents folders who contains the XML files')
+@click.argument('input', type=str)
+@click.argument('output', type=str)
+@click.argument('template', type=str)
 @click.option('--metadata', type=str, help='Enter the metadata files of the XML files')
-@click.option('--output', type=str, help='Enter the destination path')
-@click.option('--template', type=str, help='Enter the template for the collections entry')
-def main(input, metadata, output, template):
+def main(input, output, template, metadata):
+    """
+    INPUT: Enter the name of the folder who contains the XML files or the differents folders who contains the XML files
+
+    OUTPUT: Enter the destination path
+
+    TEMPLATE: Enter the template xml for the collections entry
+    """
     if input is not None:
         SRC_PATH = input
     if metadata is not None :
@@ -33,10 +40,9 @@ def main(input, metadata, output, template):
         if os.path.isdir(os.path.join(SRC_PATH, name_dir)):
             #Ajouter le nom des dossiers que vous ne souhaitez pas capitanizer
             list_dir.append(name_dir)
-    print(list_dir)
     folder_name = None
     if metadata is not None :
-        pt = PositionThese(SRC_PATH, METADATA, template_collection, 'templates/__capitains_work.xml', 'templates/edition.xml', 'templates/refs_decl.xml', 'templates/Add_EncodingDesc.xsl')
+        pt = PositionThese(SRC_PATH, METADATA, template_collection, 'templates/__capitains_work_encpos.xml', 'templates/edition.xml', 'templates/refs_decl.xml', 'templates/Add_EncodingDesc.xsl')
         pt.write_textgroup(folder_name, DEST_PATH, list_dir)
     else:
         cpt = Capitainizer_files(SRC_PATH, template_collection, 'templates/__capitains_work.xml', 'templates/edition.xml', 'templates/refs_decl.xml', 'templates/Add_EncodingDesc.xsl')

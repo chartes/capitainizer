@@ -4,6 +4,8 @@ from itertools import chain
 import lxml.etree as ET
 from lxml import etree
 import shutil
+import re
+import html
 
 CTS_NS = "http://chs.harvard.edu/xmlns/cts"
 XML_NS = "http://www.w3.org/XML/1998/namespace"
@@ -118,28 +120,167 @@ class Capitainizer_files:
             tag, ns, self.stringify(node))
         )
 
+    def obtain_identifier(self, xml_source):
+        try:
+            identifier = xml_source.xpath('//ti:teiHeader/ti:fileDesc/ti:publicationStmt/ti:idno', namespaces=self.__nsti)[0]
+            identifier = identifier.text
+        except:
+            identifier = None
+        return identifier
+
+    def obtain_title(self, xml_source, meta):
+        """
+        titles = xml_source.xpath('//ti:titleStmt/ti:title[not(@type)]', namespaces=self.__nsti)
+        for title in titles:
+            title = etree.tostring(title, encoding='unicode')
+            title = re.match(r"<title.*?>(.*)<\/title>", title)
+            title = title.group(1)
+            title = re.sub('<hi.*?>',"<i>", title)
+            title = re.sub('<\/hi.*?>', "</i>", title)
+            if "title" not in meta.keys():
+                titleXML = title
+            else:
+                titleXML = "{0} . {1}".format(titleXML, title)
+        titles_sub = xml_source.xpath('//ti:teiHeader/ti:fileDesc/ti:titleStmt/ti:title[@type="sub"]', namespaces=self.__nsti)
+        for title_sub in titles_sub:
+            title_sub = etree.tostring(title_sub, encoding='unicode')
+            title_sub = re.match(r"<title.*?>(.*)<\/title>", title_sub)
+            title_sub = title_sub.group(1)
+            title_sub = re.sub('<hi.*?>',"<i>", title_sub)
+            title_sub = re.sub('<\/hi.*?>', "</i>", title_sub)
+            titleXML = "{0}. {1}".format(titleXML, title_sub)
+        """
+        xsltTitle = ET.parse("./templates/Titles_capitains.xsl")
+        transformTitle = ET.XSLT(xsltTitle)
+        titleXML = transformTitle(xml_source)
+        titleXML = "\n".join([s for s in titleXML.__str__().split("\n") if s])
+        titleXML = html.unescape(titleXML)
+        return titleXML
+
+    def obtain_author(self, xml_source):
+        authors = xml_source.xpath('//ti:titleStmt/ti:author[not(@ana)]/@key', namespaces=self.__nsti)
+        list_author = []
+        if authors is not None:
+            for author in authors:
+                list_author.append(author)
+        else:
+            authors = xml_source.xpath('//ti:titleStmt/ti:author[not(@ana)]', namespaces=self.__nsti)
+            for author in authors:
+                list_author.append(author)
+        return list_author
+
+    def obtain_contributor(self, xml_source):
+        contributors = xml_source.xpath("//ti:titleStmt/ti:author[@ana='contributor']/@key", namespaces=self.__nsti)
+        list_contributor = []
+        if contributors is not None:
+            for contributor in contributors:
+                list_contributor.append(contributor)
+        else:
+            contributors = xml_source.xpath("//ti:titleStmt/ti:author[@ana='contributor']", namespaces=self.__nsti)
+            for contributor in contributors:
+                list_contributor.append(contributor)
+        contributors = xml_source.xpath('//ti:titleStmt/ti:editor/@key', namespaces=self.__nsti)
+        if contributors is not None:
+            for contributor in contributors:
+                if contributor in list_contributor:
+                    continue
+                else:
+                    list_contributor.append(contributor)
+        else:
+            contributors = xml_source.xpath('//ti:titleStmt/ti:editor', namespaces=self.__nsti)
+            for contributor in contributors:
+                list_contributor.append(contributor)
+        return list_contributor
+
+    def obtain_date(self, xml_source):
+        try:
+            date = xml_source.xpath('//ti:profileDesc/ti:creation/ti:date/@when', namespaces=self.__nsti)[0]
+        except:
+            date = None
+        if date is None:
+            try:
+                date = xml_source.xpath('//ti:profileDesc/ti:creation/ti:date/@notBefore', namespaces=self.__nsti)[0]
+                date = "{0} - {1}".format(date, xml_source.xpath('//ti:profileDesc/ti:creation/ti:date/@notAfter', namespaces=self.__nsti)[0])
+            except:
+                date = "2022"
+        return date
+
+    def obtain_publisher(self, xml_source):
+        publishers = xml_source.xpath('//ti:publicationStmt/ti:publisher', namespaces=self.__nsti)
+        list_publisher = []
+        for publisher in publishers:
+            publisher = etree.tostring(publisher, encoding='unicode')
+            publisher = re.match(r"<publisher.*?>(.*)<\/publisher>", publisher)
+            publisher = publisher.group(1)
+            list_publisher.append(publisher)
+        return list_publisher
+
+    def obtain_language(self, xml_source):
+        try:
+            language = xml_source.xpath('//ti:TEI/@xml:lang', namespaces=self.__nsti)[0]
+        except:
+            language = None
+        if language is None:
+            try:
+                language = xml_source.xpath('//ti:profileDesc/ti:langUsage/ti:language/@ident', namespaces=self.__nsti)[0]
+            except:
+                language = None
+        return language
+
+    def obtain_rights(self, xml_source):
+        try:
+            rights = xml_source.xpath('//ti:fileDesc/ti:publicationStmt/ti:availability/ti:licence/@target', namespaces=self.__nsti)[0]
+        except:
+            rights = None
+        return rights
+
+    def obtain_description(self, xml_source):
+        descriptions = xml_source.xpath("//ti:fileDesc/ti:noteStmt/ti:note[@type='abstract']", namespaces=self.__nsti)
+        print(descriptions)
+        list_description = []
+        if descriptions is not None:
+            for description in descriptions:
+                list_description.append(description.text)
+        return list_description
+
+    def obtain_isPartOf(self, xml_source):
+        try:
+            isPartOfs = xml_source.xpath("//ti:fileDesc/ti:seriesStmt/ti:idno")[0]
+        except:
+            isPartOfs = None
+        return isPartOfs
+
+    def obtain_source(self, xml_source):
+        xsltBibl = ET.parse("./templates/bibl_capitains.xsl")
+        transformBibl = ET.XSLT(xsltBibl)
+        source = transformBibl(xml_source)
+        source = "\n".join([s for s in source.__str__().split("\n") if s])
+        source = html.unescape(source)
+        return source
+
     def obtain_metadata (self, folder_name, id):
         meta = {}
         src_edition = self.src_edition(id, folder_name)
         meta["id"] = id.replace(".xml", "")
-        title = src_edition.xpath('//ti:titleStmt/ti:title/node()', namespaces=self.__nsti)
-        if type(title[0]) == etree._ElementUnicodeResult:
-            meta["title"] = title[0]
-        else:
-            title[0].tag = "i"
-            meta["title"] = etree.tostring(title[0], encoding='unicode')
-            meta["title"] = meta["title"].replace(' xmlns="http://www.tei-c.org/ns/1.0" rend="i"', "")
-        try:
-            meta["author"] = src_edition.xpath('//ti:titleStmt/ti:author', namespaces=self.__nsti)[0].text
-        except:
-            meta["author"] = None
-        meta["promotion_year"] = src_edition.xpath('//ti:profileDesc/ti:creation/ti:date[@when]', namespaces=self.__nsti)[0].text
+        meta["identifier"] = self.obtain_identifier(src_edition)
+        meta["title"] = self.obtain_title(src_edition, meta)
+        meta["author"] = self.obtain_author(src_edition)
+        meta["contributor"] = self.obtain_contributor(src_edition)
+        meta["year"] = self.obtain_date(src_edition)
+        meta["publisher"] = self.obtain_publisher(src_edition)
+        meta["language"] = self.obtain_language(src_edition)
+        meta["rights"] = self.obtain_rights(src_edition)
+        meta["description"] = self.obtain_description(src_edition)
+        meta["isPartOf"] = self.obtain_isPartOf(src_edition)
+        meta["source"] = self.obtain_source(src_edition)
         return meta
 
     #Fonction qui écrit __capitains__.xml au niveau des éditions
     def write_work(self, folder_name, dest_path, list_works, from_scratch=True):
+        cleanr = re.compile('<.*?>')
         for works in list_works:
             meta = self.obtain_metadata(folder_name, works)
+            print(meta)
             template = self.__wg_template
 
             #Ajout des valeurs du tableau dans les valeurs dublin core classique
@@ -156,27 +297,72 @@ class Capitainizer_files:
 
             titles = template.xpath("//dc:title", namespaces=template.getroot().nsmap)
             for tit in titles:
-                tit.text = meta["title"]
+                tit.text = re.sub(cleanr,'',meta["title"])
 
+            titles = template.xpath("//dct:title", namespaces=template.getroot().nsmap)
+            for tit in titles:
+                tit.text = re.sub(cleanr,'',meta["title"])
+
+            languages = template.xpath("//dc:language", namespaces=template.getroot().nsmap)
+            for language in languages:
+                language.text = meta["language"]
 
 
             #Ajout des valeurs dans les entrées dtc
             structuredMetadata = template.xpath("//cpt:structured-metadata", namespaces=template.getroot().nsmap)
-            elem = etree.Element(ET.QName(DCT_NS, "rights"), nsmap={'dct': DCT_NS})
-            elem.text = "https://creativecommons.org/licenses/by-nc-nd/3.0/fr/"
-            structuredMetadata[0].append(elem)
-
-            if meta["author"]:
-                elem = etree.Element(ET.QName(DC_NS, "creator"), nsmap={'dc': DC_NS})
-                elem.text = "{0}".format(meta["author"])
+            if meta["identifier"] is not None:
+                elem = etree.Element(ET.QName(DC_NS, "identifier"), nsmap={'dct': DC_NS})
+                elem.text = "{0}".format(meta["identifier"])
                 structuredMetadata[0].append(elem)
+
+            if meta["author"] is not []:
+                for author in meta["author"]:
+                    elem = etree.Element(ET.QName(DC_NS, "creator"), nsmap={'dc': DC_NS})
+                    elem.text = "{0}".format(author)
+                    structuredMetadata[0].append(elem)
+
+            if meta["contributor"] is not []:
+                for contributor in meta["contributor"]:
+                    elem = etree.Element(ET.QName(DCT_NS, "contributor"), nsmap={'dct': DCT_NS})
+                    elem.text = "{0}".format(contributor)
+                    structuredMetadata[0].append(elem)
+
+            if meta["description"] is not []:
+                for descritpion in meta["description"]:
+                    elem = etree.Element(ET.QName(DC_NS, "description"), nsmap={'dct': DC_NS})
+                    elem.text = "{0}".format(descritpion)
+                    structuredMetadata[0].append(elem)
+
+            if meta["isPartOf"] is not None:
+                elem = etree.Element(ET.QName(DC_NS, "isPartOf"), nsmap={'dct': DC_NS})
+                elem.text = "{0}".format(meta["isPartOf"])
+                structuredMetadata[0].append(elem)
+
+            if meta["source"] is not None:
+                elem = etree.Element(ET.QName(DC_NS, "source"), nsmap={'dct': DC_NS})
+                elem.text = "{0}".format(meta["source"])
+                structuredMetadata[0].append(elem)
+
+            publishers = template.xpath("//dct:publisher", namespaces=template.getroot().nsmap)
+            if meta["publisher"] != []:
+                for publisher in publishers:
+                    publisher.text = meta["publisher"][0]
+
+            elem = etree.Element(ET.QName(DCT_NS, "language"), nsmap={'dct': DCT_NS})
+            elem.text = "{0}".format(meta["language"])
+            structuredMetadata[0].append(elem)
 
             elem = etree.Element(ET.QName(HTML_NS, "h1"), nsmap={'xml': HTML_NS})
             elem.text = "{0}".format(meta["title"])
             structuredMetadata[0].append(elem)
 
+            if meta["rights"] is not None:
+                elem = etree.Element(ET.QName(DCT_NS, "rights"), nsmap={'dct': DCT_NS})
+                elem.text = "{0}".format(meta["rights"])
+                structuredMetadata[0].append(elem)
+
             year = template.xpath("//dct:date", namespaces=template.getroot().nsmap)
-            year[0].text = meta["promotion_year"]
+            year[0].text = meta["year"]
 
             if work is None:
                 raise ValueError('No work detected in the work template document')
