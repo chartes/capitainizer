@@ -1,1 +1,3 @@
 .DS_Store
+venv
+capitainizer/__pycache__/
