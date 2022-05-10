@@ -76,6 +76,13 @@ class Capitainizer_files:
                 f.write(tree_str)
 
     def write_textgroup(self,  folder_name, dest_path, list_works):
+        """
+         Write __capitinais__.xml files who must
+        :param folder_name:
+        :param dest_path:
+        :param list_works:
+        :return:
+        """
         # get a fresh new etree
         template = self.__tg_template
         # Update the URN part : pos -> pos2015
@@ -259,6 +266,13 @@ class Capitainizer_files:
         return source
 
     def obtain_metadata (self, folder_name, id):
+        """
+        Extract all the metadata inside the TEI-Header of an xml files to create
+
+        :param folder_name: Path of the folder name
+        :param id: name of the xml files
+        :return: list of metadata export from the TEI HEADER
+        """
         meta = {}
         src_edition = self.src_edition(id, folder_name)
         meta["id"] = id.replace(".xml", "")
