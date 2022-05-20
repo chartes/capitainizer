@@ -361,7 +361,12 @@ class Capitainizer_files:
             if meta["publisher"] != []:
                 for publisher in publishers:
                     publisher.text = meta["publisher"][0]
-
+            """        
+            Méthode pour configurer l'url dts pour obtenir dts download    
+            download_xml = etree.Element(ET.QName(DTS_NS, "download"), nsmap={'dts': DTS_NS})
+            download_xml.text = "{0}/dts/document?id={0}".format(url_dts, meta["id"] )
+            structuredMetadata[0].append(download_xml)
+            """
             elem = etree.Element(ET.QName(DCT_NS, "language"), nsmap={'dct': DCT_NS})
             elem.text = "{0}".format(meta["language"])
             structuredMetadata[0].append(elem)
